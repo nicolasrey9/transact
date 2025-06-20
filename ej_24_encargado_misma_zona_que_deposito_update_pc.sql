@@ -29,7 +29,7 @@ BEGIN
                 select top 1 empl_codigo from Empleado 
                 join Departamento on empl_departamento=depa_codigo
                 where depa_zona=@zona
-                order by (select count(*) from DEPOSITO where depo_encargado=empl_codigo) desc
+                order by (select count(*) from DEPOSITO where depo_encargado=empl_codigo) asc
                 ) 
             WHERE depo_codigo=@deposito
         fetch next from depositos_fallados into @deposito, @zona
