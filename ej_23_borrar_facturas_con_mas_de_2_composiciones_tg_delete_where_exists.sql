@@ -11,23 +11,6 @@ BEGIN
         group BY item_numero, item_sucursal, item_tipo) > 2
     BEGIN
         PRINT 'HAY MÁS DE DOS PRODUCTOS CON COMPOSICIÓN EN UNA FACTURA';
-        DELETE FROM Item_factura
-        WHERE EXISTS (
-            SELECT 1
-            FROM inserted i2
-            WHERE Item_factura.item_numero = i2.item_numero
-              AND Item_factura.item_sucursal = i2.item_sucursal
-              AND Item_factura.item_tipo = i2.item_tipo
-        );
-        DELETE FROM Factura
-        WHERE EXISTS (
-            SELECT 1
-            FROM inserted i2
-            WHERE Factura.fact_numero = i2.item_numero
-              AND Factura.fact_sucursal = i2.item_sucursal
-              AND Factura.fact_tipo = i2.item_tipo
-        );
         ROLLBACK TRANSACTION;
     END
-
 END
