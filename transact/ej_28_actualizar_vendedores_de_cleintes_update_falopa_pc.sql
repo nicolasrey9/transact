@@ -43,3 +43,58 @@ begin
     FROM Cliente C
 end
 GO
+
+
+/*
+create procedure reasignar_vendedores_a_clientes 
+as
+begin
+--reasignar a clientes su vendedor (clie_vendedor de Cliente)
+-- el nuevo vendedor es el que mas facturas le vendio a ese cliente
+-- si no tiene facturas, el vendedor que vendio mas monto
+declare @cliente char(6)
+declare @vendedorEstrella NUMERIC(6,0)
+
+set @vendedorEstrella = 
+
+(select top 1 empl_codigo 
+from Empleado 
+join Cliente on clie_vendedor = empl_codigo
+join Factura on fact_vendedor = clie_vendedor 
+group by clie_codigo
+order by sum(fact_total) desc)
+
+DECLARE cursor_clientes cursor for
+    select clie_codigo, clie_vendedor from Cliente
+
+    open cursor_clientes
+    FETCH NEXT from cursor_clientes into @cliente
+    while @@FETCH_STATUS=0
+    BEGIN
+        IF (select count() from Factura where fact_cliente = @cliente) = 0
+        BEGIN
+            UPDATE Cliente
+            set clie_vendedor = @vendedorEstrella
+        END
+
+        ELSE
+
+        BEGIN
+            UPDATE Cliente
+            set clie_vendedor = 
+            (select top 1 fact_vendedor 
+            from Factura 
+            join Cliente on clie_codigo = @cliente
+            group by fact_vendedor
+            order by count(fact_numero) DESC)
+        END
+
+        fetch next from cursor_clientes into @cliente
+    END
+
+    close cursor_clientes
+
+    deallocate cursor_clientes
+END
+go
+*/

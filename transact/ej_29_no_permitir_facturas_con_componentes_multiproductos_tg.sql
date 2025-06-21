@@ -1,0 +1,21 @@
+/*
+29. Desarrolle el/los elementos de base de datos necesarios para que se cumpla
+automaticamente la regla de que 
+
+una factura no puede contener productos que
+sean componentes de diferentes productos. 
+
+En caso de que esto ocurra no debe
+grabarse esa factura y debe emitirse un error en pantalla.
+*/
+
+create trigger ej_29_no_permitir_facturas_con_componentes_multiproductos on Item_factura after INSERT
+AS
+BEGIN
+    if exists (select 1 from inserted join Composicion c1 on c1.comp_componente=item_producto
+        join Composicion c2 on c2.comp_componente=item_producto and c2.comp_producto != c1.comp_producto)
+    BEGIN
+        PRINT('Error: una factura no puede contener productos que sean componentes de diferentes productos.')
+        ROLLBACK TRANSACTION
+    END
+END
