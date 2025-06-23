@@ -50,3 +50,25 @@ BEGIN
         ROLLBACK TRANSACTION
     END
 END
+go
+----------------MAS SIMPLE, ENTIENDO QUE ESTA BIEN TAMBIEN :)------------------------
+/*25. Desarrolle el/los elementos de base de datos necesarios para que no se permita
+que la composición de los productos sea recursiva, o sea, que si el producto A
+compone al producto B, dicho producto B no pueda ser compuesto por el
+producto A, hoy la regla se cumple.*/
+CREATE trigger t25_no_se_permite_composicion_recursiva on Composicion after INSERT,UPDATE
+as
+BEGIN
+
+IF exists (select top 1 i1.comp_producto, i1.comp_componente
+            from inserted i1 
+            where i1.comp_componente in (select i2.comp_producto 
+                                        from inserted i2
+                                        where i2.comp_componente = i1.comp_producto)
+           )
+BEGIN
+ROLLBACK TRANSACTION
+END
+
+END
+GO

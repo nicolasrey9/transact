@@ -23,7 +23,7 @@ begin
         )
 end
 GO
-
+-----------------------------------------------------------------------------
 create procedure ej_28_actualizar_vendedores_de_cleintes_update_falopa_pc
 as
 begin
@@ -43,9 +43,7 @@ begin
     FROM Cliente C
 end
 GO
-
-
-/*
+-----------------------------------------------------
 create procedure reasignar_vendedores_a_clientes 
 as
 begin
@@ -65,20 +63,20 @@ group by clie_codigo
 order by sum(fact_total) desc)
 
 DECLARE cursor_clientes cursor for
-    select clie_codigo, clie_vendedor from Cliente
+    select clie_codigo from Cliente
 
     open cursor_clientes
     FETCH NEXT from cursor_clientes into @cliente
     while @@FETCH_STATUS=0
     BEGIN
-        IF (select count() from Factura where fact_cliente = @cliente) = 0
+        IF (select count(*) from Factura where fact_cliente = @cliente) = 0
         BEGIN
             UPDATE Cliente
             set clie_vendedor = @vendedorEstrella
         END
 
         ELSE
-
+        
         BEGIN
             UPDATE Cliente
             set clie_vendedor = 
@@ -88,13 +86,12 @@ DECLARE cursor_clientes cursor for
             group by fact_vendedor
             order by count(fact_numero) DESC)
         END
-
+        
         fetch next from cursor_clientes into @cliente
     END
-
+    
     close cursor_clientes
-
+    
     deallocate cursor_clientes
 END
 go
-*/
