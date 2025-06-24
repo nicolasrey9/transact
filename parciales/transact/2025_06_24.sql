@@ -32,3 +32,74 @@ begin
     END
 END
 go
+-----------------------------------------------------------------------------------
+CREATE TRIGGER unTrigger ON Item_Factura
+FOR insert
+AS BEGIN
+    DECLARE @PROD char(6), @FECHA SMALLDATETIME, @PRECIO decimal(12,2), 
+	@SUCURSAL char(4), @NUM char(8), @TIPO char(1)
+    DECLARE c1 CURSOR FOR
+	select fact_numero, fact_sucursal, fact_tipo from inserted 
+	join Factura on fact_numero+fact_sucursal+fact_tipo = item_numero+item_sucursal+item_tipo
+
+	OPEN c1
+	FETCH NEXT FROM c1 INTO  @NUM, @SUCURSAL ,@TIPO
+
+	WHILE @@FETCH_STATUS = 0
+	BEGIN
+
+
+	    DECLARE c2 CURSOR FOR 
+		select item_producto, fact_fecha, item_precio from inserted
+		join Factura on fact_numero+fact_sucursal+fact_tipo = item_numero+item_sucursal+item_tipo
+		where fact_numero+fact_sucursal+fact_tipo = @NUM + @SUCURSAL + @TIPO
+
+		OPEN c2
+		FETCH NEXT FROM c2 INTO @PROD, @FECHA, @PRECIO
+
+		WHILE @@FETCH_STATUS = 0
+		BEGIN
+
+
+		      IF EXISTS(select 1 from Item_Factura where item_producto = @PROD 
+			  and item_numero+item_sucursal+item_tipo <> @NUM+@SUCURSAL+@TIPO)
+			  BEGIN 
+			        IF EXISTS( select 1 from Item_Factura 
+		            join Factura on fact_numero+fact_sucursal+fact_tipo = item_numero+item_sucursal+item_tipo
+		            where item_producto = @PROD and DATEDIFF(MONTH, @FECHA, fact_fecha) = 1 and @PRECIO > item_precio * 1.05)
+	                BEGIN 
+		               Delete Item_Factura
+			           where item_numero = @NUM and item_sucursal = @SUCURSAL and item_tipo = @TIPO
+
+			           Delete Factura
+			           where fact_numero = @NUM and fact_sucursal = @SUCURSAL and fact_tipo = @TIPO
+
+				    CLOSE c2
+				    DEALLOCATE c2
+			        END
+
+			       IF EXISTS( select 1 from Item_Factura 
+		           join Factura on fact_numero+fact_sucursal+fact_tipo = item_numero+item_sucursal+item_tipo
+		           where item_producto = @PROD and DATEDIFF(YEAR, @FECHA, fact_fecha) = 1 and @PRECIO > item_precio * 1.5)
+	               BEGIN 
+		              Delete Item_Factura
+			          where item_numero = @NUM and item_sucursal = @SUCURSAL and item_tipo = @TIPO
+
+			          Delete Factura
+			          where fact_numero = @NUM and fact_sucursal = @SUCURSAL and fact_tipo = @TIPO
+
+				   CLOSE c2
+				   DEALLOCATE c2
+			       END
+			  END
+
+		      FETCH NEXT FROM c2 INTO @PROD, @FECHA, @PRECIO
+		END
+		
+	    FETCH NEXT FROM c1 INTO @PROD, @FECHA, @PRECIO, @NUM, @SUCURSAL ,@TIPO   
+	END
+
+	CLOSE c1
+	DEALLOCATE c1
+END
+GO
