@@ -103,3 +103,40 @@ AS BEGIN
 	DEALLOCATE c1
 END
 GO
+
+
+------------ NICO ------------------
+
+create function precio_de_mes(@producto char(8), @mes int, @anio int)
+returns decimal(12,2)
+BEGIN
+    DECLARE @valor decimal(12,2)
+
+    select @valor=avg(item_precio) from Item_Factura
+    join Factura on item_numero+item_sucursal+item_tipo=fact_numero+fact_sucursal+fact_tipo
+    where item_producto=@producto and year(fact_fecha)=@anio and month(fact_fecha)=@mes
+
+    return @valor
+END
+GO
+
+create trigger triggr on Item_Factura after insert
+as
+begin
+    if exists (select 1 from inserted join Factura
+    on item_numero+item_sucursal+item_tipo=fact_numero+fact_sucursal+fact_tipo
+    where
+    dbo.precio_de_mes(item_producto, MONTH(fact_fecha)-1, YEAR(fact_fecha)) is not null and
+    abs(item_precio - dbo.precio_de_mes(item_producto, MONTH(fact_fecha)-1, YEAR(fact_fecha))) 
+    > dbo.precio_de_mes(item_producto,MONTH(fact_fecha)-1, YEAR(fact_fecha)) * 0.05)
+    or 
+    exists (select 1 from inserted join Factura
+    on item_numero+item_sucursal+item_tipo=fact_numero+fact_sucursal+fact_tipo
+    where 
+    dbo.precio_de_mes(item_producto, MONTH(fact_fecha), YEAR(fact_fecha)-1) is not null and
+    abs(item_precio - dbo.precio_de_mes(item_producto, MONTH(fact_fecha), YEAR(fact_fecha)-1)) 
+    > dbo.precio_de_mes(item_producto,MONTH(fact_fecha), YEAR(fact_fecha)-1) * 0.5)
+    BEGIN
+        ROLLBACK TRANSACTION
+    END
+END
