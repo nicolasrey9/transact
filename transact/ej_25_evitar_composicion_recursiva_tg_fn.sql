@@ -51,7 +51,7 @@ BEGIN
     END
 END
 go
-----------------MAS SIMPLE, ENTIENDO QUE ESTA BIEN TAMBIEN :)------------------------
+----------------NO ESTOY SEGURO------------------------
 /*25. Desarrolle el/los elementos de base de datos necesarios para que no se permita
 que la composición de los productos sea recursiva, o sea, que si el producto A
 compone al producto B, dicho producto B no pueda ser compuesto por el
@@ -70,5 +70,21 @@ BEGIN
 ROLLBACK TRANSACTION
 END
 
+END
+GO
+--------------CREO QUE ESTA BIEN-----------------------------------
+/*Desarrolle el/los elementos de base de datos necesarios para que no se permita
+que la composición de los productos sea recursiva, o sea, que si el producto A 
+compone al producto B, dicho producto B no pueda ser compuesto por el
+producto A, hoy la regla se cumple.*/
+CREATE trigger recursividad_prods_compuestos on Composicion after insert,UPDATE AS
+BEGIN
+    if exists (select 1 
+                from inserted c1
+                where c1.comp_producto in (select comp_componente from Composicion
+                                            where comp_producto = c1.comp_componente))
+    BEGIN
+    ROLLBACK TRANSACTION
+    END
 END
 GO

@@ -95,3 +95,43 @@ DECLARE cursor_clientes cursor for
     deallocate cursor_clientes
 END
 go
+/*Se requiere reasignar los vendedores a los clientes. Para ello se solicita que
+realice el o los objetos de base de datos necesarios para asignar a cada uno de los
+clientes 
+
+el vendedor que le corresponda, entendiendo que el vendedor que le
+corresponde es aquel que 
+
+le vendió más facturas a ese cliente, si en particular un
+cliente no tiene facturas compradas se le deberá asignar el vendedor con más
+venta de la empresa, o sea, el que en monto haya vendido más.*/
+CREATE PROC reasignar_vendedores AS
+BEGIN
+DECLARE @vendedorEstrella NUMERIC(6,0)
+DECLARE @cliente char(6)
+
+set @vendedorEstrella = (select top 1 fact_vendedor 
+                        from Factura
+                        group by fact_vendedor
+                        order by sum(fact_total) desc)
+declare clie CURSOR FOR
+select clie_codigo from Cliente
+
+OPEN clie
+FETCH next from clie into @cliente
+
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    UPDATE Cliente
+    set clie_vendedor = isnull((select top 1 fact_vendedor 
+                        from Factura
+                        where fact_cliente = @cliente
+                        group by fact_vendedor
+                        order by count(distinct fact_numero+fact_sucursal+fact_tipo) desc),@vendedorEstrella)
+
+FETCH next from clie into @cliente
+END
+close emp
+DEALLOCATE emp
+END
+GO

@@ -8,7 +8,7 @@ grabarse esa factura y debe emitirse un error en pantalla.
 CREATE TRIGGER facturas_no_deben_contener_productos_compuestos on Item_Factura AFTER INSERT,UPDATE 
 as
 BEGIN
-    IF (select count() from inserted i
+    IF (select count(*) from inserted i
     where i.item_producto in (select comp_componente from Composicion)) > 0
     PRINT ('ERROR: UNA FACTURA NO PUEDE CONTENER PRODUCTOS COMPONENTES')
 
@@ -31,9 +31,10 @@ GO
 CREATE TRIGGER facturas_no_deben_contener_productos_compuestos_mas_simple on Item_Factura AFTER INSERT,UPDATE 
 as
 BEGIN
-    IF (select count() from inserted i
+    IF (select count(*) from inserted i
     where i.item_producto in (select comp_componente from Composicion)) > 0
     PRINT ('ERROR: UNA FACTURA NO PUEDE CONTENER PRODUCTOS COMPONENTES')
     ROLLBACK TRANSACTION
 END
 GO
+

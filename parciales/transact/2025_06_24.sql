@@ -140,3 +140,32 @@ begin
         ROLLBACK TRANSACTION
     END
 END
+GO
+/*2. Dado el contexto inflacionario se tiene que aplicar un control en el cual nunca se permita
+vender un producto a un precio que no esté entre 0%-5% del precio de venta del producto
+el mes anterior, ni tampoco que esté en más de un 50% el precio del mismo producto
+que hace 12 meses atrás. Aquellos productos nuevos, o que no tuvieron ventas en
+meses anteriores no debe considerar esta regla ya que no hay precio de referencia.*/
+CREATE TRIGGER contexto_inflacionario on Item_Factura after INSERT,update AS
+BEGIN
+	IF EXISTS (SELECT 1 from inserted ins
+				join Factura f1 on fact_numero+fact_sucursal+fact_tipo=ins.item_numero+ins.item_sucursal+ins.item_tipo
+				where ins.item_precio > 1.05 * isnull((select prod_precio 
+												from Producto
+												join Item_Factura on prod_codigo = item_producto 
+																	and item_producto = ins.item_producto
+												join Factura on fact_numero+fact_sucursal+fact_tipo=item_numero+item_sucursal+item_tipo
+												where YEAR(fact_fecha) = YEAR(f1.fact_fecha) 
+													and MONTH(fact_fecha) = DATEADD(MONTH,-1,f1.fact_fecha)),INS.item_precio)
+				or ins.item_precio > 1.5 * isnull((select prod_precio 
+												from Producto
+												join Item_Factura on prod_codigo = item_producto 
+																	and item_producto = ins.item_producto
+												join Factura on fact_numero+fact_sucursal+fact_tipo=item_numero+item_sucursal+item_tipo
+												where MONTH(fact_fecha) = month(f1.fact_fecha) 
+													and YEAR(fact_fecha) = DATEADD(YEAR,-1,f1.fact_fecha)),INS.item_precio))
+	BEGIN
+	ROLLBACK TRANSACTION
+	END													
+END
+GO

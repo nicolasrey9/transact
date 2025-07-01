@@ -27,7 +27,7 @@ END
 end
 GO
 
-CREATE function ej_11_empleados_a_cargo_recursivo(@empleado numeric(6,0))
+CREATE function ej_11_empleados_a_cargo_recursivo_(@empleado numeric(6,0))
 returns bigint
 BEGIN
     declare @cantidad_a_cargo bigint
@@ -55,5 +55,4 @@ BEGIN
 
     return @cantidad_a_cargo
 END
-
 go

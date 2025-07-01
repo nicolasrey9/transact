@@ -48,3 +48,62 @@ BEGIN
     END
 END
 GO
+/*13. Cree el/los objetos de base de datos necesarios para implantar la siguiente regla
+
+“Ningún jefe puede tener un salario mayor al 20% de las suma de los salarios de
+sus empleados totales (directos + indirectos)”.
+
+Se sabe que en la actualidad dicha regla se cumple y que la base de datos es accedida por n aplicaciones de
+diferentes tipos y tecnologías*/
+create trigger sueldos_jefes_controlados on Empleado after INSERT, UPDATE, DELETE AS
+BEGIN
+
+    IF exists (select 1 
+            from Empleado
+            where empl_salario > 0.2 * dbo.sumatoriaSueldosEmpleadosACargo(empl_codigo))
+
+    BEGIN
+    ROLLBACK TRANSACTION
+    END
+END
+GO
+
+CREATE FUNCTION sumatoriaSueldosEmpleadosACargo_2(@empleado numeric(6,0))
+returns INT
+BEGIN
+DECLARE @sueldos INT
+DECLARE @emp NUMERIC(6,0)
+DECLARE @sueldoActual INT
+set @sueldos = 0
+set @sueldoActual = 0
+
+DECLARE cursor_empleados CURSOR FOR
+    select empl_codigo, empl_salario from Empleado
+    where empl_jefe = @empleado
+
+open cursor_empleados
+
+FETCH next from cursor_empleados into @emp, @sueldoActual
+
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    set @sueldos += @sueldoActual + dbo.sumatoriaSueldosEmpleadosACargo(@emp)
+
+    FETCH next from cursor_empleados into @emp, @sueldoActual
+END
+return @sueldos
+END
+GO
+/*
+select f1.fami_id,f1.fami_detalle
+
+from Familia f1 
+
+where f1.fami_detalle in (select fami_detalle from Familia
+                        WHERE fami_detalle = f1.fami_detalle and fami_id != f1.fami_id
+                        GROUP by fami_detalle)
+
+group by f1.fami_id,f1.fami_detalle
+
+ORDER BY F1.fami_detalle
+*/

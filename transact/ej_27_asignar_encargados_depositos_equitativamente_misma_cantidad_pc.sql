@@ -90,3 +90,42 @@ DEALLOCATE cursor_depositos
 
 END
 GO
+/*27. Se requiere reasignar los encargados de stock de los diferentes depósitos. Para
+ello se solicita que realice el o los objetos de base de datos necesarios para
+
+asignar a cada uno de los depósitos el encargado que le corresponda,
+
+entendiendo que el encargado que le corresponde es cualquier empleado que no
+es jefe y que no es vendedor, o sea, que no está asignado a ningun cliente, 
+
+se deberán ir asignando tratando de que un empleado solo tenga un deposito
+asignado, en caso de no poder se irán aumentando la cantidad de depósitos
+progresivamente para cada empleado.*/
+create proc reasignar_encargados_a_depositos AS
+BEGIN
+declare @deposito char(2)
+
+declare depositos cursor FOR
+    select depo_codigo from DEPOSITO
+
+open depositos
+FETCH next from depositos into @deposito
+
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    UPDATE DEPOSITO
+    set depo_encargado = (select empl_codigo 
+                        from Empleado
+                        where empl_codigo not in (select empl_jefe from Empleado) 
+                                and empl_codigo not in (select fact_vendedor from Factura)
+                        group by empl_codigo
+                        order by (select count(*) from DEPOSITO where depo_encargado=empl_codigo))
+    where depo_codigo = @deposito
+
+    FETCH next from depositos into @deposito
+END
+close depositos
+DEALLOCATE depositos
+
+END
+GO
